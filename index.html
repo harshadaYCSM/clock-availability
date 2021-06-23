@@ -1,0 +1,201 @@
+<html>
+    <head>
+        <script>
+            let timeoutInMiliseconds =600000; // 10 minutes
+            let timeoutId; 
+            let timeAtwhichStatusChangesToOffline = 0
+            let timeAtwhichStatusChangesToOnline = 0
+            let offlineTime = 0
+            let activeNow = false
+            let totalOfflineTime = 0
+            let photoIndex = 0
+
+            function displayTime() {
+                document.getElementById("time").innerHTML = "Loading time.."
+
+                setInterval(()=> {
+                    let myTime = new Date()
+                console.log(myTime, navigator.onLine)
+                /* if (!navigator.onLine) { //if not online
+                    doInactive() // make me inactive
+                } else {
+                    resetTimer()
+                } */
+                /* if (myTime.includes("central")) {
+                    //display m picture
+                } */
+                let newTime = myTime.toString().slice(0,24) // To eliminate GMT details
+                document.getElementById("time").innerHTML = newTime
+                }, 1000)
+            }
+
+            function startTimer() { 
+                timeoutId = window.setTimeout(doInactive, timeoutInMiliseconds)
+                document.getElementById("status").src = "online.jpg"
+                if (activeNow) { // To show offline & total offline time
+                    timeAtwhichStatusChangesToOnline = new Date()
+                    offlineTime = timeAtwhichStatusChangesToOnline - timeAtwhichStatusChangesToOffline
+                    totalOfflineTime += offlineTime
+                    console.log("offlineTime :" ,offlineTime)
+                    console.log("totalOfflineTime: ", totalOfflineTime )
+                    let offlineTimeString = timeConvert( (offlineTime/60000).toFixed(1) )
+                    let totalOfflineTimeString = timeConvert((totalOfflineTime/60000).toFixed(1))
+                    document.getElementById("offline").innerHTML = "Welcome back! You were offline for " + offlineTimeString
+                    document.getElementById("totalOfflineTime").innerHTML = "Total time offline for the day " + totalOfflineTimeString
+                    document.getElementById("totalOfflineTime").style.border = "groove"
+                    activeNow = false
+                }
+            }
+  
+            function timeConvert(n) {
+                // converts minutes to hour minute format
+                let num = n;
+                let hours = (num / 60);
+                let rhours = Math.floor(hours);
+                let minutes = (hours - rhours) * 60;
+                let rminutes = Math.round(minutes);
+                if (rminutes > 0) {
+                    if (rhours === 1 ) {
+                        if (rminutes === 1) {
+                            return rhours + " hour & " + rminutes + " minute.";
+                        } else {
+                            return rhours + " hour & " + rminutes + " minutes.";
+                        }
+                    } else if (rhours === 0) {
+                        return rminutes + " minutes.";
+                    }  else {
+                        if (rminutes === 1) {
+                            return rhours + " hours & " + rminutes + " minute.";
+                        } else {
+                            return rhours + " hours & " + rminutes + " minutes.";
+                        }
+                    }
+                } else {
+                    if (rhours === 1 ) {
+                        return rhours + " hour";
+                    }  else {
+                    return  rhours + " hours";
+                    }
+                }
+            }
+
+            function doInactive() {
+                // change status to inactive
+                document.getElementById("status").src = "offline.png"
+                timeAtwhichStatusChangesToOffline = new Date()
+                activeNow = true
+            }
+ 
+            function setupTimers () {
+                document.addEventListener("mousemove", resetTimer, false);
+                document.addEventListener("mousedown", resetTimer, false);
+                document.addEventListener("keypress", resetTimer, false);
+                document.addEventListener("touchmove", resetTimer, false);
+                
+                startTimer();
+            }
+
+            function resetTimer() { 
+                window.clearTimeout(timeoutId)
+                startTimer();
+            }
+
+            function changeView() {
+                if (document.body.style.color === "black") {
+                    document.body.style.color = "white"
+                } else {
+                    document.body.style.color = "black"
+                }
+            }
+
+            function getQuote() {
+                fetch("https://type.fit/api/quotes")
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        let quoteNumber = Math.floor(Math.random() * (1643 - 0 + 1) ) + 0;
+                        let quoteMsg = data[quoteNumber].text
+                        let quoteAuthor = data[quoteNumber].author ? data[quoteNumber].author : "Unknown"
+                        console.log(quoteMsg,quoteAuthor,quoteNumber);
+                        document.getElementById("quote").innerHTML = quoteMsg + " - " + quoteAuthor
+                    });
+            }
+
+            function getBackground(init=false) {
+                let searchQueries = ["nature", "green", "food", "coffe","flower","butterfly","rose","beach","travel",
+                "sunset","sunrise","sky","water","sea","office","cafe","technology","laptop","book","reading","ganpati",
+                "ganesh","krishna","hindu","temple","lotus","shiva","vishnu","scenary","kerala","friendship","fort","maharashtra",
+                "guitar","music","morning","programming","coding","science","maths","bird","kingfisher","swan","bonfire",
+                "life","tabla","splash","drop","india","switzerland","london","paris","spring","autumn","glass","wine","watch",
+                "peacock","feather","dandelion","dream","wind","jasmine","trishul","himalay","trek","yoga","spects","time","sand",
+                "road","city","citylights","evening"]
+                let numberOfPhotos = 25
+                if (init) { // keep the theme same for the day
+                    photoIndex = Math.floor(Math.random() * (searchQueries.length - 0 + 1) ) + 0;
+                }
+                let theme = searchQueries[photoIndex].toUpperCase()
+                let searchQuery = "https://api.unsplash.com/photos/random/?count="+ numberOfPhotos
+                +"&client_id=8e31e45f4a0e8959d456ba2914723451b8262337f75bcea2e04ae535491df16d&query=" +
+                searchQueries[photoIndex]
+                document.getElementById("theme").innerHTML = "Theme for the day : " + theme
+                fetch(searchQuery)
+                    .then((response) =>
+                    {
+                        return response.json()
+                    } )
+                    .then((data) => {
+                        console.log(data)
+                        document.getElementById("background").src = data[0].urls.regular
+                    })
+            }
+
+            function initializeTimersAndProject() {
+                console.log("initializing timer")
+                setupTimers();
+                displayTime();
+                getQuote()
+                getBackground(true)
+            }
+
+            /* function changeQuoteColor() {
+                if (!(document.getElementById("quote").style.color === document.body.style.color)) {
+                    document.getElementById("quote").style.color = "rgb(133 0 255 / 88%)"
+                    console.log("Harshada changing to default")
+                } else {
+                    document.getElementById("quote").style.color = document.body.style.color  
+                    console.log("Harshada changing to other color")
+                }
+            } */
+
+        </script>
+        <style>
+            #quote:hover, #quote:active {color: rgb(82, 26, 58);}
+        </style>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Monofett&family=Special+Elite&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Londrina+Sketch&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+    </head>
+    <body onload="initializeTimersAndProject()" style="display: inline-flex;flex-wrap: wrap;color: white;    margin: 0px;">
+        <img id="background" style="z-index: -1;position: absolute;height: 100%;width: 100%;opacity:75%">
+            <div id="nametime" style="z-index: 2;">
+                <h1 id="time" style="z-index: 2;height: 70px;width: 580px; margin-left: 25px;font-family: 'Londrina Sketch', cursive;font-size: 75px;font-weight: lighter;"></h1>
+                <h2 style="z-index: 2;height: 30px;width: 358px; margin-left: 25px;margin-top: 130px;">Harshada Chaudhari</h2>
+                <h3 style="z-index: 2;height: 10px;width: 358px; margin-left: 30px; margin-top: -20px;">Palghar, Maharashtra</h3>
+            </div>
+            <img src="profile-pic.png" style="z-index: 2;height: 400px;margin-left: 25px;margin-top: 45px;">
+            <img id="status" style="z-index: 2;height: 200px;position: absolute;left: 865px;top: 282px;">
+            <button onclick="getBackground()" style="z-index: 2;height: 30px;margin:20px">Change Background</button> 
+            <button onclick="changeView()" style="z-index: 2;height: 30px;margin:20px">Change Font</button> 
+            <h3 id="theme" style="position: absolute;right: 120px;top: 50px;font-family: 'Dancing Script', cursive;">Discover Theme</h3>
+            <h1 id="offline" style="z-index: 2;margin-left: 25px;"></h1>
+            <h3 id="totalOfflineTime" style="z-index: 2;margin-top: 30px;margin-left: 10px;"></h1>
+            <h2 id="quote" style="z-index: 2;margin-left: 25px;margin-top: 20px;font-family: 'Special Elite', cursive;font-weight: normal;"
+            onMouseOver="changeQuoteColor()" onMouseOut="changeQuoteColor()"></h2>
+            <img id="backg">
+            </img>  
+</body>
+</html>
