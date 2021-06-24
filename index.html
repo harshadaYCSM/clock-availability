@@ -1,7 +1,7 @@
 <html>
     <head>
         <script>
-            let timeoutInMiliseconds =600000; // 10 minutes
+            let timeoutInMiliseconds =6000; // 10 minutes
             let timeoutId; 
             let timeAtwhichStatusChangesToOffline = 0
             let timeAtwhichStatusChangesToOnline = 0
@@ -151,10 +151,18 @@
             }
 
             function initializeTimersAndProject() {
+                let slider = document.getElementById("opacitySlider")
+                slider.oninput = function() {
+                console.log(slider.value)
+                document.getElementById("background").style.opacity = slider.value + "%"
+                console.log("Harshada",  document.getElementById("background").style.opacity )
+            }
+
                 console.log("initializing timer")
                 setupTimers();
                 displayTime();
                 getQuote()
+                getGitaQuote()
                 getBackground(true)
             }
 
@@ -168,6 +176,114 @@
                 }
             } */
 
+            function findNumberOfVerses(chapter) {
+                switch(chapter) {
+                    case 1:
+                        return 47
+                        break
+                    case 2:
+                        return 72
+                        break
+                    case 3:
+                        return 43
+                        break
+                    case 4:
+                        return 42
+                        break
+                    case 5:
+                        return 29
+                        break
+                    case 6:
+                        return 47
+                        break
+                    case 7:
+                        return 30
+                        break
+                    case 8:
+                        return 28
+                        break
+                    case 9:
+                        return 34
+                        break
+                    case 10:
+                        return 42
+                        break
+                    case 11:
+                        return 55
+                        break
+                    case 12:
+                        return 20
+                        break
+                    case 13:
+                        return 34
+                        break
+                    case 14:
+                        return 27
+                        break
+                    case 15:
+                        return 20
+                        break
+                    case 16:
+                        return 24
+                        break
+                    case 17:
+                        return 28
+                        break
+                    case 18:
+                        return 78
+                        break
+
+                }
+                /* let ChapterTitleVerses = {
+                1:	{Arjuna's Vishada Yoga:	47},
+                2:	{Sankhya Yog:	72,}
+                3	Karma Yoga	43
+                4	Jnana Yoga	42
+                5	Karma-Sanyasa Yoga	29
+                6	Atma Samyama -Yoga	47
+                7	Vijnana Yoga	30
+                8	Aksara-ParaBrahma Yoga	28
+                9	Raja-Vidya-Raja-Guhya Yoga	34
+                10	Vibhuti-Vistara Yoga	42
+                11	Viswarupa-Darsana Yoga	55
+                12	Bhakti Yoga	20
+                13	Ksetra-Ksetrajna Vibhaga Yoga	34
+                14	Gunatraya-Vibhaga Yoga	27
+                15	Purushottama-Prapti Yoga	20
+                16	Daivasura-Sampad-Vibhaga Yoga	24
+                17	Shraddhatraya-Vibhaga Yoga	28
+                18	Moksha-Sanyasa Yoga	78
+                Total	700 
+                }*/
+            }
+
+            function getGitaQuote() {
+                let chapter = Math.floor(Math.random() * (18 - 0 + 1) ) + 0;
+                let verse = findNumberOfVerses(chapter)
+                let url = "http://gita-api.herokuapp.com/gita/chapter/" + chapter + "/verse/" + verse
+                fetch(url)
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then((data) => {
+                        console.log(data)
+                        if (data.code && data.code === 500) {
+                            console.log(data.errorMessage)
+                        } else {
+                            console.log(data.sanskrit)
+                            console.log(data.hindi)
+                            console.log(data.hindi_meaning)
+
+                            let position = data.hindi.lastIndexOf("ॐ")
+                            let b = "<br>"
+                            let output = [data.hindi.slice(0, position), b, data.hindi.slice(position)].join('');
+                            console.log(output)
+                            document.getElementById("sanskrit").innerHTML =  data.sanskrit.replaceAll("\n","<br>")
+                            document.getElementById("hindi").innerHTML = output
+                            document.getElementById("hindimeaning").innerHTML = data.hindi_meaning
+                        }
+                    })
+            }
         </script>
         <style>
             #quote:hover, #quote:active {color: rgb(82, 26, 58);}
@@ -181,16 +297,30 @@
     </head>
     <body onload="initializeTimersAndProject()" style="display: inline-flex;flex-wrap: wrap;color: white;    margin: 0px;">
         <img id="background" style="z-index: -1;position: absolute;height: 100%;width: 100%;opacity:75%">
+        <h3 id="theme" style="margin-left: 10px;margin-top: 10px;font-family: 'Dancing Script', cursive;">Discover Theme</h3>
+
+        <label style="margin-top:24px;height: fit-content;margin-left: 52%;">Opacity<input type="range" min="1" max="100" value="50" id="opacitySlider" style="margin-left: 5px;"></label>
+            <button onclick="getBackground()" style="z-index: 2;height: 30px;margin-top:20px;margin-left: 25px;">Change Background</button> 
+            <button onclick="changeView()" style="z-index: 2;height: 30px;margin-top:20px;margin-left: 10px;">Change Font</button> 
+
             <div id="nametime" style="z-index: 2;">
                 <h1 id="time" style="z-index: 2;height: 70px;width: 580px; margin-left: 25px;font-family: 'Londrina Sketch', cursive;font-size: 75px;font-weight: lighter;"></h1>
                 <h2 style="z-index: 2;height: 30px;width: 358px; margin-left: 25px;margin-top: 130px;">Harshada Chaudhari</h2>
                 <h3 style="z-index: 2;height: 10px;width: 358px; margin-left: 30px; margin-top: -20px;">Palghar, Maharashtra</h3>
             </div>
-            <img src="profile-pic.png" style="z-index: 2;height: 400px;margin-left: 25px;margin-top: 45px;">
-            <img id="status" style="z-index: 2;height: 200px;position: absolute;left: 865px;top: 282px;">
-            <button onclick="getBackground()" style="z-index: 2;height: 30px;margin:20px">Change Background</button> 
-            <button onclick="changeView()" style="z-index: 2;height: 30px;margin:20px">Change Font</button> 
-            <h3 id="theme" style="position: absolute;right: 120px;top: 50px;font-family: 'Dancing Script', cursive;">Discover Theme</h3>
+            <img src="profile-pic.png" style="z-index: 2;height: 400px;margin-left: -131px;margin-top: 45px;">
+            <img id="status" style="z-index: 2;height: 200px;margin-left: -174px;margin-top: 265px;">
+
+            
+
+            <div id="gitaquote" style="margin-left: 15px;width: 500px;margin-top: 95px;">
+                <div style="text-align: center;font-size: xx-large;font-weight: bold; color: darkred !important;">
+                    <img src="feather.png" style="height: 30px;">गीतामृतम्</div>
+                <div id="sanskrit" style="margin-left: 45px;margin-top: 5px;text-align: center;font-size: x-large;"></div>
+                <div id="hindi" style="margin-top: 20px;margin-left: 46px;text-align: center;font-size: medium;"></div>
+                <div id="hindimeaning" style="margin-top: 10px; visibility: hidden;"></div>
+            </div>
+
             <h1 id="offline" style="z-index: 2;margin-left: 25px;"></h1>
             <h3 id="totalOfflineTime" style="z-index: 2;margin-top: 30px;margin-left: 10px;"></h1>
             <h2 id="quote" style="z-index: 2;margin-left: 25px;margin-top: 20px;font-family: 'Special Elite', cursive;font-weight: normal;"
