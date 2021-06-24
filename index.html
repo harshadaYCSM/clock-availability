@@ -281,6 +281,7 @@
                             document.getElementById("sanskrit").innerHTML =  data.sanskrit.replaceAll("\n","<br>")
                             document.getElementById("hindi").innerHTML = output
                             document.getElementById("hindimeaning").innerHTML = data.hindi_meaning
+                            document.getElementById("feather").style = "height: 30px;position: absolute;-webkit-transition: 3s;-moz-transition: 3s;-ms-transition: 3s;-o-transition: 3s;transition: 3s;margin-left: 21% !important;"
                         }
                     })
             }
@@ -314,8 +315,8 @@
             
 
             <div id="gitaquote" style="margin-left: 15px;width: 500px;margin-top: 95px;">
-                <div style="text-align: center;font-size: xx-large;font-weight: bold; color: darkred !important;">
-                    <img src="feather.png" style="height: 30px;">गीतामृतम्</div>
+                <img id="feather" src="feather.png" style="height: 30px;position: absolute;margin-left: 150px;">
+                <div style="text-align: center;font-size: xx-large;font-weight: bold; color: darkred !important;">गीतामृतम्</div>
                 <div id="sanskrit" style="margin-left: 45px;margin-top: 5px;text-align: center;font-size: x-large;"></div>
                 <div id="hindi" style="margin-top: 20px;margin-left: 46px;text-align: center;font-size: medium;"></div>
                 <div id="hindimeaning" style="margin-top: 10px; visibility: hidden;"></div>
