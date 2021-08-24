@@ -9,23 +9,29 @@
             let activeNow = false
             let totalOfflineTime = 0
             let photoIndex = 0
+            let loginTime
+            let onlyOnceDone = true
+            let wellbeingScore = 0
+            let lateWorkingFlag = true
+            let moreWorkHoursFlag = true
+            let loginFlag = true
+            let backgrounds = null
+            let pictureIndex = 0
+
 
             function displayTime() {
                 document.getElementById("time").innerHTML = "Loading time.."
 
                 setInterval(()=> {
                     let myTime = new Date()
-                console.log(myTime, navigator.onLine)
-                /* if (!navigator.onLine) { //if not online
-                    doInactive() // make me inactive
-                } else {
-                    resetTimer()
-                } */
-                /* if (myTime.includes("central")) {
-                    //display m picture
-                } */
-                let newTime = myTime.toString().slice(0,24) // To eliminate GMT details
-                document.getElementById("time").innerHTML = newTime
+                    if (myTime.getHours() >= 18 && lateWorkingFlag) {
+                        console.log("Working after 6pm")
+                        wellbeingScore -= 1
+                        lateWorkingFlag = false
+                    }
+                    calculateWellbeingScore()
+                    let newTime = myTime.toString().slice(0,24) // To eliminate GMT details
+                    document.getElementById("time").innerHTML = newTime
                 }, 1000)
             }
 
@@ -36,12 +42,22 @@
                     timeAtwhichStatusChangesToOnline = new Date()
                     offlineTime = timeAtwhichStatusChangesToOnline - timeAtwhichStatusChangesToOffline
                     totalOfflineTime += offlineTime
+                    if (totalOfflineTime > 4500000 && onlyOnceDone) {
+                        totalOfflineTime = totalOfflineTime - 4500000
+                        onlyOnceDone = false
+                    }
                     console.log("offlineTime :" ,offlineTime)
                     console.log("totalOfflineTime: ", totalOfflineTime )
+                    if ((totalOfflineTime/60000) > 120 && moreWorkHoursFlag) {
+                        console.log("Offline for more than 2 hours")
+                        wellbeingScore += 3
+                        moreWorkHoursFlag = false
+                        calculateWellbeingScore()
+                    }
                     let offlineTimeString = timeConvert( (offlineTime/60000).toFixed(1) )
                     let totalOfflineTimeString = timeConvert((totalOfflineTime/60000).toFixed(1))
                     document.getElementById("offline").innerHTML = "Welcome back! You were offline for " + offlineTimeString
-                    document.getElementById("totalOfflineTime").innerHTML = "Total time offline for the day " + totalOfflineTimeString
+                    document.getElementById("totalOfflineTime").innerHTML = "Total time offline for the day " + totalOfflineTimeString + " Excluding 1.15hours of Meetings."
                     document.getElementById("totalOfflineTime").style.border = "groove"
                     activeNow = false
                 }
@@ -123,47 +139,80 @@
             }
 
             function getBackground(init=false) {
-                let searchQueries = ["nature", "green", "food", "coffe","flower","butterfly","rose","beach","travel",
-                "sunset","sunrise","sky","water","sea","office","cafe","technology","laptop","book","reading","ganpati",
-                "ganesh","krishna","hindu","temple","lotus","shiva","vishnu","scenary","kerala","friendship","fort","maharashtra",
-                "guitar","music","morning","programming","coding","science","maths","bird","kingfisher","swan","bonfire",
-                "life","tabla","splash","drop","india","switzerland","london","paris","spring","autumn","glass","wine","watch",
-                "peacock","feather","dandelion","dream","wind","jasmine","trishul","himalay","trek","yoga","spects","time","sand",
-                "road","city","citylights","evening"]
-                let numberOfPhotos = 25
+                document.getElementById("background").style.opacity = 0;
                 if (init) { // keep the theme same for the day
+                    let searchQueries = ["nature", "green", "food", "coffe","flower","butterfly","rose","beach","travel",
+                                        "sunset","sunrise","sky","water","sea","office","cafe","technology","laptop","book","reading","ganpati",
+                                        "ganesh","krishna","hindu","temple","lotus","shiva","vishnu","scenary","kerala","friendship","fort","maharashtra",
+                                        "guitar","music","morning","programming","coding","science","maths","bird","kingfisher","swan","bonfire",
+                                        "life","tabla","splash","drop","india","switzerland","london","paris","spring","autumn","glass","wine","watch",
+                                        "peacock","feather","dandelion","dream","wind","jasmine","trishul","himalay","trek","yoga","spects","time","sand",
+                                        "road","city","citylights","evening","rajasthan","ireland","london","kashmir","himalaya","ice","skate","sherlock"]
+                    let numberOfPhotos = 60
                     photoIndex = Math.floor(Math.random() * (searchQueries.length - 0 + 1) ) + 0;
+                    let theme = searchQueries[photoIndex].replace(searchQueries[photoIndex].slice(0,1) , searchQueries[photoIndex].slice(0,1).toUpperCase())
+
+                    let searchQuery = "https://api.unsplash.com/photos/random/?count="+ numberOfPhotos
+                    +"&client_id=8e31e45f4a0e8959d456ba2914723451b8262337f75bcea2e04ae535491df16d&query=" +
+                    searchQueries[photoIndex]
+                    document.getElementById("theme").innerHTML = "Theme for the day : " + theme
+                    //[0].user.location
+                    fetch(searchQuery)
+                        .then((response) =>
+                        {
+                            return response.json()
+                        } )
+                        
+                        .then((data) => {
+                            console.log(data)
+                            backgrounds = data
+                            document.getElementById("background").src = backgrounds[0].urls.regular
+                            document.getElementById("imageInfo").innerHTML = "Clicked by " + backgrounds[0].user.name + (backgrounds[0].user.location ? 
+                                " at " + backgrounds[0].user.location : "")
+                            setTimeout(() => {
+                            document.getElementById("background").style.opacity = 1;
+                            }, 700)
+                        })
+                } else {
+                    pictureIndex += 1
+                    if (pictureIndex < backgrounds.length) {
+                        document.getElementById("background").src = backgrounds[pictureIndex].urls.regular
+                        document.getElementById("imageInfo").innerHTML = "Clicked by " + backgrounds[pictureIndex].user.name + 
+                            (backgrounds[pictureIndex].user.location ? " at " + backgrounds[pictureIndex].user.location : "")
+                        setTimeout(() => {
+                        document.getElementById("background").style.opacity = 1;
+                        }, 700)
+                    } else {
+                        pictureIndex = 0
+                        document.getElementById("background").src = backgrounds[pictureIndex].urls.regular
+                        document.getElementById("imageInfo").innerHTML = "Clicked by " + backgrounds[pictureIndex].user.name + 
+                            (backgrounds[pictureIndex].user.location ? " at " + backgrounds[pictureIndex].user.location : "")
+                        setTimeout(() => {
+                        document.getElementById("background").style.opacity = 1;
+                        }, 700)
+                    }
+                   
                 }
-                let theme = searchQueries[photoIndex].toUpperCase()
-                let searchQuery = "https://api.unsplash.com/photos/random/?count="+ numberOfPhotos
-                +"&client_id=8e31e45f4a0e8959d456ba2914723451b8262337f75bcea2e04ae535491df16d&query=" +
-                searchQueries[photoIndex]
-                document.getElementById("theme").innerHTML = "Theme for the day : " + theme
-                fetch(searchQuery)
-                    .then((response) =>
-                    {
-                        return response.json()
-                    } )
-                    .then((data) => {
-                        console.log(data)
-                        document.getElementById("background").src = data[0].urls.regular
-                    })
             }
+
+
+
+
 
             function initializeTimersAndProject() {
                 let slider = document.getElementById("opacitySlider")
                 slider.oninput = function() {
-                console.log(slider.value)
-                document.getElementById("background").style.opacity = slider.value + "%"
-                console.log("Harshada",  document.getElementById("background").style.opacity )
-            }
-
+                    document.getElementById("background").style.opacity = slider.value + "%"
+                }
+                console.log("Login Time: " , new Date().toString().slice(0,24))
+                loginTime = new Date()
                 console.log("initializing timer")
                 setupTimers();
                 displayTime();
                 getQuote()
                 getGitaQuote()
                 getBackground(true)
+                calculateWellbeingScore()
             }
 
             /* function changeQuoteColor() {
@@ -176,90 +225,55 @@
                 }
             } */
 
-            function findNumberOfVerses(chapter) {
-                switch(chapter) {
-                    case 1:
-                        return 47
-                        break
-                    case 2:
-                        return 72
-                        break
-                    case 3:
-                        return 43
-                        break
-                    case 4:
-                        return 42
-                        break
-                    case 5:
-                        return 29
-                        break
-                    case 6:
-                        return 47
-                        break
-                    case 7:
-                        return 30
-                        break
-                    case 8:
-                        return 28
-                        break
-                    case 9:
-                        return 34
-                        break
-                    case 10:
-                        return 42
-                        break
-                    case 11:
-                        return 55
-                        break
-                    case 12:
-                        return 20
-                        break
-                    case 13:
-                        return 34
-                        break
-                    case 14:
-                        return 27
-                        break
-                    case 15:
-                        return 20
-                        break
-                    case 16:
-                        return 24
-                        break
-                    case 17:
-                        return 28
-                        break
-                    case 18:
-                        return 78
-                        break
-
-                }
-                /* let ChapterTitleVerses = {
-                1:	{Arjuna's Vishada Yoga:	47},
-                2:	{Sankhya Yog:	72,}
-                3	Karma Yoga	43
-                4	Jnana Yoga	42
-                5	Karma-Sanyasa Yoga	29
-                6	Atma Samyama -Yoga	47
-                7	Vijnana Yoga	30
-                8	Aksara-ParaBrahma Yoga	28
-                9	Raja-Vidya-Raja-Guhya Yoga	34
-                10	Vibhuti-Vistara Yoga	42
-                11	Viswarupa-Darsana Yoga	55
-                12	Bhakti Yoga	20
-                13	Ksetra-Ksetrajna Vibhaga Yoga	34
-                14	Gunatraya-Vibhaga Yoga	27
-                15	Purushottama-Prapti Yoga	20
-                16	Daivasura-Sampad-Vibhaga Yoga	24
-                17	Shraddhatraya-Vibhaga Yoga	28
-                18	Moksha-Sanyasa Yoga	78
-                Total	700 
-                }*/
+            function getChapterInfo(chapter) {
+                let ChapterTitleVerses = [
+                	["अध्याय पहिला अर्जुनविषादयोग" ,	47],
+                	["अध्याय दुसरा सांख्ययोग",	72],
+            	    ["अध्याय तिसरा कर्मयोग", 43],
+                	["अध्याय चौथा ज्ञानकर्मसंन्यासयोग"	,42],
+                    ["अध्याय पाचवा संन्यासयोग"	,29],
+                	["अध्याय सहावा ध्यानयोग"	,47],
+                	["अध्याय सातवा ज्ञानविज्ञानयोग"	,30],
+                	["अध्याय आठवा अक्षरब्रम्हयोग"	,28],
+                	["अध्याय नववा राजविद्याराजगुह्मयोग"	,34],
+                	["अध्याय दहावा विभूतियोग"	,42],
+                	["अध्याय अकरावा विश्वरूपदर्शनयोग"	,55],
+                	["अध्याय बारावा भक्तियोग"	,20],
+                	["अध्याय तेरावा क्षेत्रक्षेत्रज्ञविभागयोग"	,34],
+                	["अध्याय चौदावा गुणत्रयविभागयोग"	,27],
+                	["अध्याय पंधरावा पुरूषोत्तमयोग"	,20],
+                	["अध्याय सोळावा दैवासुरसंपद्विभागयोग"	,24],
+                	["अध्याय सतरावा श्रध्दात्रयविभागयोग"	,28],
+                	["अध्याय अठरावा मोक्षसंन्यासयोग"	,78]
+            ]
+/* 
+            अध्याय पहिला अर्जुनविषादयोग 47 ४७
+अध्याय दुसरा सांख्ययोग 72 ७२ 
+अध्याय तिसरा कर्मयोग 43 ४३
+अध्याय चौथा ज्ञानकर्मसंन्यासयोग 42 ४२
+अध्याय पाचवा संन्यासयोग 29 २९
+अध्याय सहावा ध्यानयोग 47 ४७
+अध्याय सातवा ज्ञानविज्ञानयोग 30 ३०
+अध्याय आठवा अक्षरब्रम्हयोग 28 २८
+अध्याय नववा राजविद्याराजगुह्मयोग 34 ३४
+अध्याय दहावा विभूतियोग 42 ४२
+अध्याय अकरावा विश्वरूपदर्शनयोग 55 ५५
+अध्याय बारावा भक्तियोग 20 २०
+अध्याय तेरावा क्षेत्रक्षेत्रज्ञविभागयोग 35 ३५
+अध्याय चौदावा गुणत्रयविभागयोग 27 २७
+अध्याय पंधरावा पुरूषोत्तमयोग 20 २०
+अध्याय सोळावा दैवासुरसंपद्विभागयोग 24 २४
+अध्याय सतरावा श्रध्दात्रयविभागयोग 28 २८
+अध्याय अठरावा मोक्षसंन्यासयोग 78 ७८ */
+            return ChapterTitleVerses[chapter]
             }
 
             function getGitaQuote() {
                 let chapter = Math.floor(Math.random() * (18 - 0 + 1) ) + 0;
-                let verse = findNumberOfVerses(chapter)
+                let chapterInfo = getChapterInfo(chapter)
+                let noOfVerses = chapterInfo[1]
+                let chapterName = chapterInfo[0]
+                let verse = Math.floor(Math.random() * (noOfVerses - 0 + 1) ) + 0; // Any one of the verses
                 let url = "http://gita-api.herokuapp.com/gita/chapter/" + chapter + "/verse/" + verse
                 fetch(url)
                     .then(function(response) {
@@ -269,22 +283,60 @@
                         console.log(data)
                         if (data.code && data.code === 500) {
                             console.log(data.errorMessage)
+                            document.getElementById("hindi").innerHTML = data.errorMessage
+                            
                         } else {
                             console.log(data.sanskrit)
                             console.log(data.hindi)
                             console.log(data.hindi_meaning)
+                            let output = ""
+                            if (data.hindi.includes("data.hindi")) {
+                                let position = data.hindi.lastIndexOf("ॐ")
+                                let b = "<br><br>"
+                                output = [data.hindi.slice(0, position), b, data.hindi.slice(position)].join('');
+                            } else {
+                                output =data.hindi;
+                            }
 
-                            let position = data.hindi.lastIndexOf("ॐ")
-                            let b = "<br>"
-                            let output = [data.hindi.slice(0, position), b, data.hindi.slice(position)].join('');
                             console.log(output)
                             document.getElementById("sanskrit").innerHTML =  data.sanskrit.replaceAll("\n","<br>")
-                            document.getElementById("hindi").innerHTML = output
+                            document.getElementById("hindi").innerHTML = output + "<br>" + chapterName
                             document.getElementById("hindimeaning").innerHTML = data.hindi_meaning
                             document.getElementById("feather").style = "height: 30px;position: absolute;-webkit-transition: 3s;-moz-transition: 3s;-ms-transition: 3s;-o-transition: 3s;transition: 3s;margin-left: 10.5% !important;"
                         }
                     })
             }
+
+            function calculateWellbeingScore() {
+                let loginTimeFloat  = parseFloat(loginTime.getHours() + "." + loginTime.getMinutes())
+                if (loginTimeFloat < 9.30 && loginFlag) {
+                    console.log("Why did you login early")
+                    wellbeingScore -= 1
+                    loginFlag = false
+                } else if (loginFlag) {
+                    wellbeingScore += 1
+                    loginFlag = false
+                }
+                document.getElementById("wellbeing").innerHTML =  wellbeingScore
+                document.getElementById("wellbeingip").value = wellbeingScore
+
+                if (wellbeingScore < 0) {
+                    document.getElementById("wellbeing").style.color = "red"
+                }
+                //Logic for wellbeing: Not before 9.30am, offline hours not less than 4hours, Not after 6pm
+            }
+            /* function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition);
+                } else {
+                    x.innerHTML = "Geolocation is not supported by this browser.";
+                }
+            }
+
+            function showPosition(position) {
+                x.innerHTML = "Latitude: " + position.coords.latitude +
+                "<br>Longitude: " + position.coords.longitude;
+            } */
         </script>
         <style>
             #quote:hover, #quote:active {color: rgb(82, 26, 58);}
@@ -323,6 +375,13 @@
                     -webkit-transform: scale(1);
                     transform: scale(1);
                 }
+                #background {
+                    -webkit-transition: opacity .5s ease-in-out;
+                    -moz-transition: opacity .5s ease-in-out;
+                    -ms-transition: opacity .5s ease-in-out;
+                    -o-transition: opacity .5s ease-in-out;
+                    transition: opacity .5s ease-in-out;
+                }
         </style>
         <link rel="preconnect" href="https://fonts.gstatic.com">
         <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
@@ -338,35 +397,39 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Gotu&display=swap" rel="stylesheet">
+        <title>Availability Clock</title>
+        <link rel="icon" href="wall-clock.png">
     </head>
     <body onload="initializeTimersAndProject()" style="display: inline-flex;flex-wrap: wrap;color: white;    margin: 0px;">
         <img id="background" style="z-index: -1;position: absolute;height: 100%;width: 100%;opacity:75%">
-        <h3 id="theme" style="margin-left: 10px;margin-top: 10px;font-family: 'Dancing Script', cursive;">Discover Theme</h3>
-
-        <label style="margin-top:24px;height: fit-content;margin-left: 52%;">Opacity<input type="range" min="1" max="100" value="50" id="opacitySlider" style="margin-left: 5px;"></label>
-            <button id="mybtn" onclick="getBackground()" style="z-index: 2;margin-top:20px;margin-left: 25px;">Background</button> 
-            <button id="mybtn" onclick="changeView()" style="z-index: 2;margin-top:20px;margin-left: 10px;">Font</button> 
+        <h3 id="theme" style="margin-left: 10px;margin-top: 10px;font-family: 'Dancing Script', cursive;width: 15%;">Discover Theme</h3>
+        <h3 id="imageInfo" style="margin-left: 0px; margin-top: 12px;font-family: 'Yatra One';width: 25%;font-size: small;"></h3>
+        <input type="range" min="-5" max="5" value="0" id="wellbeingip" style="margin-left: 1px;">
+        <h2 id="wellbeing" style="margin-top: 12px;">Wellbeing Score</h2>
+        <label style="margin-top:20px;height: fit-content;margin-left: 10%;"><input type="range" min="1" max="100" value="50" id="opacitySlider" style="margin-left: 5px;"></label>
+            <button id="mybtn" onclick="getBackground()" style="z-index: 2;margin-top:10px;margin-left: 25px;">Background</button> 
+            <button id="mybtn" onclick="changeView()" style="z-index: 2;margin-top:10px;margin-left: 10px;">Font</button> 
 
             <div id="nametime" style="z-index: 2;">
                 <h1 id="time" style="z-index: 2;height: 70px;width: 580px; margin-left: 25px;font-family: 'Londrina Sketch', cursive;font-size: 75px;font-weight: lighter;"></h1>
                 <h2 style="z-index: 2;height: 30px;width: 358px; margin-left: 25px;margin-top: 130px;">Harshada Chaudhari</h2>
                 <h3 style="z-index: 2;height: 10px;width: 358px; margin-left: 30px; margin-top: -20px;">Palghar, Maharashtra</h3>
             </div>
-            <img src="profile-pic.png" style="z-index: 2;height: 400px;margin-left: -131px;margin-top: 45px;">
-            <img id="status" style="z-index: 2;height: 200px;margin-left: -174px;margin-top: 265px;">
+            <img src="profile-pic.png" style="z-index: 2;height: 250px;margin-left: -65px;margin-top: 45px;">
+            <img id="status" style="z-index: 2;height: 150px;margin-left: -108px;margin-top: 170px;">
             <div id="gitaquote" style="margin-left: 15px;width: 500px;margin-top: 95px;height:325px">
                 <img id="feather" src="feather.png" style="height: 30px;position: absolute;margin-left:20%;">
                 <div style="text-align: center;font-size: xx-large;font-weight: bold; color: darkred !important;font-family: 'Yatra One', cursive;">गीतामृतम्</div>
-                <div id="sanskrit" style="margin-left: 45px; margin-top: 5px;text-align: center;font-size: larger;font-family: 'Gotu', sans-serif;font-weight: bold;"></div>
+                <div id="sanskrit" style="margin-left: 45px; margin-top: 5px;text-align: center;font-size: larger;font-family: 'Gotu', sans-serif;font-weight: bold;">
+                    वसुदेवसुतं देवं कंसचाणूरमर्दनम् । <br>
+                    देवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥</div>
                 <div id="hindi" style="margin-top: 20px;margin-left: 46px;text-align: center;font-size: medium;font-family: 'Kalam', cursive;"></div>
                 <div id="hindimeaning" style="margin-top: 10px; visibility: hidden;"></div>
             </div>
 
             <h1 id="offline" style="z-index: 2;margin-left: 25px;"></h1>
             <h3 id="totalOfflineTime" style="z-index: 2;margin-top: 30px;margin-left: 10px;"></h1>
-            <h2 id="quote" style="z-index: 2;margin-left: 25px;margin-top: 20px;font-family: 'Special Elite', cursive;font-weight: normal;"
-            onMouseOver="changeQuoteColor()" onMouseOut="changeQuoteColor()"></h2>
-            <img id="backg">
+            <h2 id="quote" style="z-index: 2;margin-left: 25px;margin-top: 20px;font-family: 'Special Elite', cursive;font-weight: normal;"></h2>
             </img>  
 </body>
 </html>
